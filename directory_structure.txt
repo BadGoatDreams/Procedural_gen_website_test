@@ -1,0 +1,112 @@
+﻿Directory Structure For: C:\Users\plato\Desktop\Procedural_gen_website_test
+Maximum Depth: 4
+Content Preview Max Size: 512 KB
+------------------------------------------------------------
+Procedural_gen_website_test/ (Scanning Root)
+    |-- bat_helper.bat
+        | @echo off
+        | REM --- Runs the PowerShell script in the same directory ---
+        | 
+        | REM Get the directory where this batch file is located
+        | set SCRIPT_DIR=%~dp0
+        | 
+        | REM Execute the PowerShell script, bypassing execution policy for this run only
+        | powershell.exe -ExecutionPolicy Bypass -File "%SCRIPT_DIR%powershell-helper.ps1"
+        | 
+        | REM Optional: Pause to see any output/errors before the window closes
+        | echo.
+        | echo Script execution finished. Press any key to close this window...
+        | pause >nul
+    |-- directory_structure.txt
+        | Directory Structure For: C:\Users\plato\Desktop\Procedural_gen_website_test
+        | Maximum Depth: 4
+        | Content Preview Max Size: 512 KB
+        | ------------------------------------------------------------
+        | Procedural_gen_website_test/ (Scanning Root)
+        |     |-- bat_helper.bat
+        |         [Error reading file content: Cannot bind parameter 'Encoding'. Cannot convert the "System.Text.UTF8Encoding" value of type "System.Text.UTF8Encoding" to type "Microsoft.PowerShell.Commands.FileSystemCmdletProviderEncoding".]
+        |     |-- generatevectors.js
+        |         [Error reading file content: Cannot bind parameter 'Encoding'. Cannot convert the "System.Text.UTF8Encoding" value of type "System.Text.UTF8Encoding" to type "Microsoft.PowerShell.Commands.FileSystemCmdletProviderEncoding".]
+        |     |-- index.html
+        |         [Error reading file content: Cannot bind parameter 'Encoding'. Cannot convert the "System.Text.UTF8Encoding" value of type "System.Text.UTF8Encoding" to type "Microsoft.PowerShell.Commands.FileSystemCmdletProviderEncoding".]
+        |     |-- powershell-helper.ps1
+        |         [Error reading file content: Cannot bind parameter 'Encoding'. Cannot convert the "System.Text.UTF8Encoding" value of type "System.Text.UTF8Encoding" to type "Microsoft.PowerShell.Commands.FileSystemCmdletProviderEncoding".]
+        |     |-- simple_git_push.bat
+        |         [Error reading file content: Cannot bind parameter 'Encoding'. Cannot convert the "System.Text.UTF8Encoding" value of type "System.Text.UTF8Encoding" to type "Microsoft.PowerShell.Commands.FileSystemCmdletProviderEncoding".]
+        | ... (truncated)
+    |-- generatevectors.js
+        | console.log("generateVectors.js loaded - generating map on load using OpenSimplex Noise.");
+        | 
+        | // --- Configuration Parameters ---
+        | const mapWidth = 512;
+        | const mapHeight = 512;
+        | const noiseScale = 120.0;
+        | const noiseOctaves = 5;
+        | const noisePersistence = 0.5;
+        | const noiseLacunarity = 2.0;
+        | const seaLevel = 0.48;
+        | const gradientPower = 1.8; // Controls how quickly land drops off towards edges
+        | 
+        | // Map bounds
+        | const minX = 0;
+        | const minY = 0;
+        | ... (truncated)
+    |-- index.html
+        | <!DOCTYPE html>
+        | <html>
+        | <head>
+        |     <title>Procedural Map on Load (OpenSimplex Noise)</title>
+        |     <style>
+        |         html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
+        |         #map { height: 100%; width: 100%; background-color: #eee; }
+        |     </style>
+        |     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        |     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        | 
+        |     <script src="SimplexNoise.js"></script>
+        | 
+        | 
+        | 
+        | ... (truncated)
+    |-- powershell-helper.ps1
+        | # Generate-Structure.ps1 (Corrected v3)
+        | 
+        | <#
+        | .SYNOPSIS
+        | Generates a text file representing the directory structure, with optional content previews.
+        | 
+        | .DESCRIPTION
+        | Scans the current directory recursively up to a specified depth.
+        | Outputs a tree structure to a text file.
+        | Includes previews of the first few lines for common text/code files and CSVs if they are below a size threshold.
+        | 
+        | .PARAMETER OutputPath
+        | The name of the file to save the structure to. Defaults to 'directory_structure.txt'.
+        | 
+        | .PARAMETER MaxDepth
+        | ... (truncated)
+    |-- simple_git_push.bat
+        | git add .
+        | set /p "commit= enter commit message: "
+        | git commit -m "%commit%"
+        | git push origin main
+    |-- simplexNoise.js
+        | function openSimplexNoise(clientSeed) {
+        | 	"use strict";
+        | 	const SQ5 = 2.23606797749979;
+        | 	const SQ4 = 2;
+        | 	const SQ3 = 1.7320508075688772;
+        | 	const toNums = (s) => s.split(",").map(s => new Uint8Array(s.split("").map(v => Number(v))));
+        | 	const decode = (m, r, s) => new Int8Array(s.split("").map(v => parseInt(v, r) + m));
+        | 	const toNumsB32 = (s) => s.split(",").map(s => parseInt(s, 32));
+        | 	const NORM_2D = 1.0 / 47.0;
+        | 	const NORM_3D = 1.0 / 103.0;
+        | 	const NORM_4D = 1.0 / 30.0;
+        | 	const SQUISH_2D = (SQ3 - 1) / 2;
+        | 	const SQUISH_3D = (SQ4 - 1) / 3;
+        | 	const SQUISH_4D = (SQ5 - 1) / 4;
+        | 	const STRETCH_2D = (1 / SQ3 - 1) / 2;
+        | ... (truncated)
+
+------------------------------------------------------------
+Scan completed at 04/10/2025 08:51:13
