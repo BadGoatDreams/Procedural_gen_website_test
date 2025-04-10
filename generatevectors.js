@@ -15,6 +15,7 @@ const minX = 0;
 const minY = 0;
 const maxX = mapWidth;
 const maxY = mapHeight;
+const mapBbox = [minX, minY, maxX, maxY]; // Bounding box array for clipping
 
 // --- DOM Elements ---
 const mapElement = document.getElementById('map');
@@ -95,7 +96,6 @@ function generateMapVectors() {
                 let frequency = 1.0;
                 for(let o = 0; o < noiseOctaves; o++){
                     // --- Call the obtained noise2D function directly ---
-                    // Note: No need for .createNoise2D() anymore
                     noiseVal += noise2D(x * frequency / noiseScale, y * frequency / noiseScale) * amplitude;
                     // -------------------------------------------------
                     amplitude *= noisePersistence;
@@ -138,60 +138,108 @@ function generateMapVectors() {
         console.log("Vectorizing landmass...");
         const contourGenerator = d3.contours()
             .size([mapWidth, mapHeight])
-            .thresholds([seaLevel, 1.01]); // Thresholds for contouring: [seaLevel, slightly_above_max]
+            .thresholds([seaLevel]); // Just one threshold at seaLevel
 
         const contours = contourGenerator(finalValues); // Generate contours from the final height values
+        
+        // Make sure we have valid contours
+        if (!contours || contours.length === 0) {
+            console.warn("No contours generated at sea level threshold");
+            // Create an empty land feature
+            const landFeature = { 
+                type: "Feature", 
+                properties: { type: "land" }, 
+                geometry: { type: "MultiPolygon", coordinates: [] } 
+            };
+            
+            // Create ocean covering the entire map
+            const oceanFeature = { 
+                type: "Feature", 
+                properties: { type: "ocean" }, 
+                geometry: { 
+                    type: "Polygon", 
+                    coordinates: [[
+                        [minX, minY], [maxX, minY], [maxX, maxY], [minX, maxY], [minX, minY]
+                    ]] 
+                } 
+            };
+            
+            // Add the layers to the map
+            oceanLayer = L.geoJSON(oceanFeature, { 
+                style: { color: "#007bff", weight: 1, fillColor: "#aaccff", fillOpacity: 0.6 } 
+            }).addTo(map);
+            
+            landLayer = L.geoJSON(landFeature, { 
+                style: { color: "#28a745", weight: 1, fillColor: "#77dd77", fillOpacity: 0.8 } 
+            }).addTo(map);
+            
+            map.fitBounds([[minY, minX], [maxY, maxX]], {padding: [20, 20]});
+            console.log("Generated empty land with full ocean.");
+            return;
+        }
+
         const landGeometry = contours[0]; // The first contour is everything >= seaLevel
         let landFeature = null;
 
         if (landGeometry && landGeometry.coordinates && landGeometry.coordinates.length > 0) {
-             landFeature = { type: "Feature", properties: { type: "land" }, geometry: landGeometry };
-             console.log("Landmass vectorized.");
+            landFeature = { type: "Feature", properties: { type: "land" }, geometry: landGeometry };
+            console.log("Landmass vectorized.");
         } else {
             console.log("No land generated above sea level.");
         }
 
-        // 3. Generate Ocean Polygon using Turf.js
+        // 3. Generate Ocean Polygon - IMPROVED APPROACH
         console.log("Generating ocean polygon...");
-        const mapBoundsPolygon = turf.polygon([[ [minX, minY], [maxX, minY], [maxX, maxY], [minX, maxY], [minX, minY] ]]);
-        let oceanFeature = null;
-        const landTurfFeature = landFeature ? turf.feature(landGeometry) : null;
+        
+        // Create a simple rectangular polygon for the entire map
+        const oceanFeature = { 
+            type: "Feature", 
+            properties: { type: "ocean" }, 
+            geometry: { 
+                type: "Polygon", 
+                coordinates: [[
+                    [minX, minY], [maxX, minY], [maxX, maxY], [minX, maxY], [minX, minY]
+                ]] 
+            } 
+        };
 
-        if (landTurfFeature) {
-            try {
-                // Use turf.difference to subtract the land shape from the map bounds
-                // Ensure the land polygon is valid for turf operations
-                const cleanedLand = turf.cleanCoords(landTurfFeature); // Attempt to clean up coordinates
-                const validLand = turf.buffer(cleanedLand, 0); // Buffer by 0 can sometimes fix topology issues
-
-                const oceanGeometry = turf.difference(mapBoundsPolygon, validLand);
-                if (oceanGeometry) {
-                     oceanFeature = { type: "Feature", properties: { type: "ocean" }, geometry: oceanGeometry.geometry };
-                     console.log("Ocean polygon generated.");
-                } else {
-                    console.warn("Turf.difference resulted in null. Ocean may cover full extent.");
-                }
-            } catch (e) {
-                console.error("Error during Turf.difference:", e);
-                // Fallback: ocean covers everything if difference fails
-            }
-        }
-
-        // If ocean wasn't created (no land or error), make it cover the whole map
-        if (!oceanFeature) {
-            oceanFeature = { type: "Feature", properties: { type: "ocean" }, geometry: mapBoundsPolygon.geometry };
-            if (!landTurfFeature) console.log("No land found, ocean covers full extent.");
-            else console.log("Using full extent for ocean due to difference error or null result.");
-        }
-
-        // 4. Add Layers to Leaflet Map
+        // 4. Add Layers to Leaflet Map - RENDER OCEAN FIRST, THEN LAND ON TOP
         console.log("Adding layers to map...");
-        if (oceanFeature) {
-            oceanLayer = L.geoJSON(oceanFeature, { style: { color: "#007bff", weight: 1, fillColor: "#aaccff", fillOpacity: 0.6 } }).addTo(map);
+        
+        // Always add ocean first (covering whole map)
+        oceanLayer = L.geoJSON(oceanFeature, { 
+            style: { color: "#007bff", weight: 1, fillColor: "#aaccff", fillOpacity: 0.6 } 
+        }).addTo(map);
+        
+        // Then add land on top if it exists
+        if (landFeature && landFeature.geometry && landFeature.geometry.coordinates) {
+            // Clean up land geometry before adding
+            try {
+                // Remove duplicate vertices and simplify slightly
+                const cleanLandFeature = turf.cleanCoords(landFeature);
+                const simplifiedLand = turf.simplify(cleanLandFeature, { 
+                    tolerance: 0.5, 
+                    highQuality: true,
+                    mutate: false  // Don't modify the original
+                });
+                
+                // Make sure land stays within bounds
+                const clippedLand = turf.bboxClip(simplifiedLand, mapBbox);
+                
+                landLayer = L.geoJSON(clippedLand, { 
+                    style: { color: "#28a745", weight: 1, fillColor: "#77dd77", fillOpacity: 0.8 } 
+                }).addTo(map);
+            } catch (e) {
+                console.error("Error processing land geometry:", e);
+                // Fallback to raw land geometry if processing fails
+                landLayer = L.geoJSON(landFeature, { 
+                    style: { color: "#28a745", weight: 1, fillColor: "#77dd77", fillOpacity: 0.8 } 
+                }).addTo(map);
+            }
+        } else {
+            console.log("No valid land geometry to display");
         }
-        if (landFeature) {
-            landLayer = L.geoJSON(landFeature, { style: { color: "#28a745", weight: 1, fillColor: "#77dd77", fillOpacity: 0.8 } }).addTo(map);
-        }
+        
         map.fitBounds([[minY, minX], [maxY, maxX]], {padding: [20, 20]}); // Fit map view to bounds
         console.log("Generation finished and map updated.");
 
@@ -200,7 +248,6 @@ function generateMapVectors() {
         if(mapElement) mapElement.innerHTML = `Error during map generation: ${error.message}. Check console for details.`;
     }
 }
-//what
 
 // --- Auto-run on Load ---
 // Make sure the DOM is ready before running the generation
@@ -209,15 +256,3 @@ if (document.readyState === 'loading') {
 } else {
     generateMapVectors(); // DOMContentLoaded has already fired
 }
-
-// Optional: Regenerate on button click (Example)
-/*
-const regenButton = document.createElement('button');
-regenButton.textContent = 'Regenerate Map';
-regenButton.style.position = 'absolute';
-regenButton.style.top = '10px';
-regenButton.style.left = '50px';
-regenButton.style.zIndex = 1000; // Ensure it's on top
-regenButton.onclick = generateMapVectors;
-document.body.appendChild(regenButton);
-*/
