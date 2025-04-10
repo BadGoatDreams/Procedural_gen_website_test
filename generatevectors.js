@@ -43,9 +43,9 @@ function generateMapVectors() {
     }
 
     // --- Check if the openSimplexNoise function loaded ---
-    if (typeof SimplexNoise !== 'function') {
-        console.error("SimplexNoise function not found! Make sure openSimplexNoise.js is loaded correctly before generateVectors.js.");
-        if(mapElement) mapElement.innerHTML = "Error: Noise library function (SimplexNoise) not found. Check console.";
+    if (typeof openSimplexNoise !== 'function') {
+        console.error("openSimplexNoise function not found! Make sure openSimplexNoise.js is loaded correctly before generateVectors.js.");
+        if(mapElement) mapElement.innerHTML = "Error: Noise library function (openSimplexNoise) not found. Check console.";
         return;
     }
     // ----------------------------------------------------
