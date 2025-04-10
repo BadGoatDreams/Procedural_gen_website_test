@@ -200,6 +200,7 @@ function generateMapVectors() {
         if(mapElement) mapElement.innerHTML = `Error during map generation: ${error.message}. Check console for details.`;
     }
 }
+//what
 
 // --- Auto-run on Load ---
 // Make sure the DOM is ready before running the generation
