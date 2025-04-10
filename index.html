@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Procedural Map on Load (OpenSimplex Noise)</title>
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
+        #map { height: 100%; width: 100%; background-color: #eee; }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script src="SimplexNoise.js"></script>
+
+    <script src="https://d3js.org/d3-contour.v3.min.js"></script>
+    <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+
+</head>
+<body>
+    <div id="map"></div>
+    <script src="generatevectors.js"></script>
+</body>
+</html>
